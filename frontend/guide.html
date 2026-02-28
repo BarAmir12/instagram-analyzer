@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guide — Downloading your Instagram data</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page-guide">
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24">
+        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+        <circle cx="12" cy="12" r="4"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none"/>
+      </svg>
+    </div>
+    <h1>How to download your Instagram data</h1>
+    <p>A short step-by-step guide</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('mobile', this)">📱 Mobile</button>
+    <button class="tab-btn" onclick="switchTab('desktop', this)">💻 Desktop</button>
+  </div>
+
+  <!-- Mobile tab -->
+  <div class="tab-content active" id="tab-mobile">
+    <div class="steps-list">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Open Instagram Settings</h3>
+          <p>Open the app, tap your profile picture at the bottom right, then tap ☰ (three lines) at the top right → <strong>Settings and privacy</strong>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Go to "Accounts Center"</h3>
+          <p>Scroll down and tap <strong>Accounts Center</strong>, then choose <strong>Your information and permissions</strong>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Create an export</h3>
+          <p>Tap <strong>Export your information</strong>, then <strong>Create export</strong>, and finally select <strong>Export to device</strong>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Customize the information</h3>
+          <p>Tap <strong>Customize information</strong>, uncheck all options — make sure only <strong>Followers and following</strong> is selected.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Set date range and format</h3>
+          <p>For date range select <strong>All time</strong>. For format select <strong>JSON</strong>. Then tap <strong>Export</strong>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <h3>Download the file</h3>
+          <p>Instagram will send you a notification (may take a few minutes to an hour). Return to the same screen → <strong>Available files</strong> → download the ZIP file.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Desktop tab -->
+  <div class="tab-content" id="tab-desktop">
+    <div class="shortcut-card">
+      <div class="icon">🔗</div>
+      <h3>Direct shortcut</h3>
+      <p>Click the button below to go directly to the Instagram download page — no need to navigate through menus.</p>
+      <a class="shortcut-btn" href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank">Go directly to the download page →</a>
+    </div>
+    <div class="steps-list">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h3>Visit Account Center</h3>
+          <p>Click the "Go directly to the download page" button above, or go to <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/" target="_blank">accountscenter.instagram.com</a>. Make sure you're logged in to Instagram.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h3>Create an export</h3>
+          <p>Click <strong>Create export</strong> → select your Instagram account → click <strong>Export to device</strong>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h3>Customize the information</h3>
+          <p>Click <strong>Customize information</strong>, uncheck all options — make sure only <strong>Followers and following</strong> is selected.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h3>Set date range and format</h3>
+          <p>For date range select <strong>All time</strong>. For format select <strong>JSON</strong>. Click <strong>Export</strong>.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <h3>Download the file</h3>
+          <p>Instagram will email you when the file is ready (may take a few minutes). Return to the same page → <strong>Available files</strong> → download the ZIP file.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="back-link"><a href="/">← Back to the app</a></p>
+</div>
+
+<script>
+  function switchTab(name, btn) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + name).classList.add('active');
+  }
+</script>
+</body>
+</html>

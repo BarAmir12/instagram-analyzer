@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram — @{{ username }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page-report">
+    <h1>📊 Instagram Analytics — @{{ username }}</h1>
+    <p class="subtitle">Generated on {{ generated_at }} from your Instagram data export</p>
+
+    <div class="stats">
+        <div class="stat-card"><div class="num">{{ data.followers_count|fmt_num }}</div><div class="lbl">Followers<span class="info-icon">!<span class="tooltip">These numbers may be slightly inaccurate — we only verify accounts that are not following you back and pending requests, to avoid overloading Instagram's servers. What matters most is that the "not following back" and "pending" counts are correct.</span></span></div></div>
+        <div class="stat-card"><div class="num">{{ data.following_count|fmt_num }}</div><div class="lbl">Following<span class="info-icon">!<span class="tooltip">These numbers may be slightly inaccurate — we only verify accounts that are not following you back and pending requests, to avoid overloading Instagram's servers. What matters most is that the "not following back" and "pending" counts are correct.</span></span></div></div>
+        <div class="stat-card"><div class="num">{{ data.not_following_back|length|fmt_num }}</div><div class="lbl">Not following back</div></div>
+        <div class="stat-card"><div class="num">{{ data.pending|length|fmt_num }}</div><div class="lbl">Pending requests</div></div>
+    </div>
+
+    <div class="sections-grid">
+
+    <div class="section">
+        <div class="section-header">
+            <span>👻</span><h2>Not following back</h2>
+            <span class="badge">{{ data.not_following_back|length }}</span>
+            {% if rl_nfb %}<span class="warn-icon">!<span class="tooltip">Due to too many requests, Instagram is blocking API calls — inactive profiles cannot be filtered right now.</span></span>{% endif %}
+        </div>
+        <div class="toolbar">
+            <label><input type="checkbox" id="selectAll1" onchange="toggleAll('tbl1', this)"> Select all</label>
+            <span class="selected-count" id="count1">0 selected</span>
+            <button class="open-btn" id="openBtn1" onclick="openAllSelected('tbl1')" disabled>🚀 Open all in tabs</button>
+        </div>
+        <div class="range-bar">
+            <label>Select rows</label>
+            <input type="number" id="from1" min="1" max="{{ data.not_following_back|length }}" placeholder="from">
+            <span class="range-sep">to</span>
+            <input type="number" id="to1" min="1" max="{{ data.not_following_back|length }}" placeholder="to">
+            <button class="range-apply" onclick="applyRange('tbl1', 'from1', 'to1')">Mark</button>
+            <button class="range-clear" onclick="clearRange('tbl1')">Clear</button>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search username..." oninput="filterTable('tbl1', this.value)">
+        </div>
+        <table id="tbl1">
+            <thead><tr><th class="cb-th"></th><th>#</th><th>Username</th><th>Follow date</th></tr></thead>
+            <tbody>
+            {% for row in data.not_following_back %}
+            <tr>
+                <td class="cb-cell"><input type="checkbox" class="row-cb" data-table="tbl1" data-url="https://www.instagram.com/{{ row[0] }}" data-name="{{ row[0] }}"></td>
+                <td class="num-cell">{{ loop.index }}</td>
+                <td><a href="https://www.instagram.com/{{ row[0] }}" target="_blank">@{{ row[0] }}</a></td>
+                <td class="date-cell">{{ row[1]|fmt_date }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-header">
+            <span>⏳</span><h2>Pending follow requests</h2>
+            <span class="badge">{{ data.pending|length }}</span>
+            {% if rl_pending %}<span class="warn-icon">!<span class="tooltip">Due to too many requests, Instagram is blocking API calls — profiles that are no longer private cannot be filtered right now.</span></span>{% endif %}
+        </div>
+        <div class="toolbar">
+            <label><input type="checkbox" id="selectAll2" onchange="toggleAll('tbl2', this)"> Select all</label>
+            <span class="selected-count" id="count2">0 selected</span>
+            <button class="open-btn" id="openBtn2" onclick="openAllSelected('tbl2')" disabled>🚀 Open all in tabs</button>
+        </div>
+        <div class="range-bar">
+            <label>Select rows</label>
+            <input type="number" id="from2" min="1" max="{{ data.pending|length }}" placeholder="from">
+            <span class="range-sep">to</span>
+            <input type="number" id="to2" min="1" max="{{ data.pending|length }}" placeholder="to">
+            <button class="range-apply" onclick="applyRange('tbl2', 'from2', 'to2')">Mark</button>
+            <button class="range-clear" onclick="clearRange('tbl2')">Clear</button>
+        </div>
+        <div class="search-bar">
+            <input type="text" placeholder="Search username..." oninput="filterTable('tbl2', this.value)">
+        </div>
+        <table id="tbl2">
+            <thead><tr><th class="cb-th"></th><th>#</th><th>Username</th><th>Request date</th></tr></thead>
+            <tbody>
+            {% for row in data.pending %}
+            <tr>
+                <td class="cb-cell"><input type="checkbox" class="row-cb" data-table="tbl2" data-url="https://www.instagram.com/{{ row[0] }}" data-name="{{ row[0] }}"></td>
+                <td class="num-cell">{{ loop.index }}</td>
+                <td><a href="https://www.instagram.com/{{ row[0] }}" target="_blank">@{{ row[0] }}</a></td>
+                <td class="date-cell">{{ row[1]|fmt_date }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        {% raw %}
+        function getChecked(tableId) {
+            return [...document.querySelectorAll(`#${tableId} .row-cb:checked`)];
+        }
+
+        function updateCount(tableId) {
+            const n      = getChecked(tableId).length;
+            const suffix = tableId === 'tbl1' ? '1' : '2';
+            document.getElementById('count' + suffix).textContent = n + ' selected';
+            document.getElementById('openBtn' + suffix).disabled  = n === 0;
+            const allVisible = [...document.querySelectorAll(`#${tableId} .row-cb`)]
+                .filter(cb => cb.closest('tr').style.display !== 'none');
+            const allChecked = allVisible.length > 0 && allVisible.every(cb => cb.checked);
+            const masterCb   = document.getElementById('selectAll' + suffix);
+            masterCb.checked       = allChecked;
+            masterCb.indeterminate = !allChecked && n > 0;
+        }
+
+        function toggleAll(tableId, masterCb) {
+            document.querySelectorAll(`#${tableId} .row-cb`).forEach(cb => {
+                const row = cb.closest('tr');
+                if (row.style.display !== 'none') {
+                    cb.checked = masterCb.checked;
+                    row.classList.toggle('selected', masterCb.checked);
+                }
+            });
+            updateCount(tableId);
+        }
+
+        document.querySelectorAll('.row-cb').forEach(cb => {
+            cb.addEventListener('change', () => {
+                cb.closest('tr').classList.toggle('selected', cb.checked);
+                updateCount(cb.dataset.table);
+            });
+        });
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className   = 'toast';
+            void t.offsetWidth;
+            t.className   = 'toast show';
+        }
+
+        function openAllSelected(tableId) {
+            const urls = getChecked(tableId).map(cb => cb.dataset.url);
+            if (!urls.length) return;
+            showToast(`⏳ Opening ${urls.length} tabs...`);
+            urls.forEach((url, i) => setTimeout(() => window.open(url, '_blank'), i * 80));
+            showToast(`✅ Opened ${urls.length} tabs`);
+        }
+
+        function applyRange(tableId, fromId, toId) {
+            const from = parseInt(document.getElementById(fromId).value) || 1;
+            const to   = parseInt(document.getElementById(toId).value)   || Infinity;
+            if (from > to) { showToast('⚠️ Start must be less than end'); return; }
+            const rows = [...document.querySelectorAll(`#${tableId} tbody tr`)].filter(r => r.style.display !== 'none');
+            rows.forEach(row => {
+                const num = parseInt(row.cells[1].textContent.trim());
+                if (num >= from && num <= to) {
+                    const cb   = row.querySelector('.row-cb');
+                    cb.checked = true;
+                    row.classList.add('selected');
+                }
+            });
+            updateCount(tableId);
+            showToast(`✅ Marked rows ${from}–${Math.min(to, rows.length)}`);
+        }
+
+        function clearRange(tableId) {
+            document.querySelectorAll(`#${tableId} .row-cb`).forEach(cb => {
+                cb.checked = false;
+                cb.closest('tr').classList.remove('selected');
+            });
+            updateCount(tableId);
+        }
+
+        function filterTable(tableId, query) {
+            const q = query.toLowerCase();
+            document.querySelectorAll(`#${tableId} tbody tr`).forEach(row => {
+                row.style.display = row.cells[2].textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+            updateCount(tableId);
+        }
+        {% endraw %}
+    </script>
+</body>
+</html>

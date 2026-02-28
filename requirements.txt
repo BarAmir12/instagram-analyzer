@@ -1,0 +1,8 @@
+# Instagram Analyzer — Python dependencies
+# Install with: pip install -r requirements.txt
+
+flask>=3.0
+gunicorn>=22.0
+
+# Chrome cookie decryption (optional — needed only for auto-login from Chrome on macOS)
+pycryptodome>=3.0

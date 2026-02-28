@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Instagram Analyzer</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page-index">
+
+<div id="overlay">
+  <div class="spinner"></div>
+  <div class="progress-text" id="progress-title">Analyzing data...</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="progress-fill"></div>
+  </div>
+  <div class="progress-count" id="progress-count"></div>
+  <div class="progress-sub" id="progress-sub">This may take a while, almost done</div>
+</div>
+
+<div class="card">
+  <div class="logo">
+    <svg viewBox="0 0 24 24">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+      <circle cx="12" cy="12" r="4"/>
+      <circle cx="17.5" cy="6.5" r="1" fill="#fff" stroke="none"/>
+    </svg>
+  </div>
+  <h1>Instagram Analyzer</h1>
+  <p class="subtitle">Upload the ZIP file you downloaded from Instagram<br>and get a report of who's not following you back</p>
+
+  <form id="upload-form" action="/analyze" method="post" enctype="multipart/form-data">
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" name="zipfile" id="file-input" accept=".zip">
+      <div class="drop-icon">📦</div>
+      <div class="drop-text">Drag a ZIP file here</div>
+      <div class="drop-hint">or click to browse</div>
+    </div>
+    <div class="file-chosen" id="file-chosen"></div>
+    <button type="submit" class="btn" id="submit-btn" disabled>Analyze →</button>
+  </form>
+
+  <div class="steps">
+    <div class="step"><span class="step-icon">📥</span>Download from Instagram</div>
+    <div class="step"><span class="step-icon">📤</span>Upload here</div>
+    <div class="step"><span class="step-icon">📊</span>Get report</div>
+  </div>
+
+  <p class="guide-link">Not sure how to download your data from Instagram?
+    <a href="/guide">Click here for the guide</a>
+  </p>
+</div>
+
+<script>
+  const input   = document.getElementById('file-input');
+  const chosen  = document.getElementById('file-chosen');
+  const btn     = document.getElementById('submit-btn');
+  const drop    = document.getElementById('drop-zone');
+  const form    = document.getElementById('upload-form');
+  const overlay = document.getElementById('overlay');
+  const fill    = document.getElementById('progress-fill');
+  const count   = document.getElementById('progress-count');
+  const title   = document.getElementById('progress-title');
+  const subtext = document.getElementById('progress-sub');
+
+  input.addEventListener('change', () => {
+    if (input.files[0]) { chosen.textContent = '📎 ' + input.files[0].name; btn.disabled = false; }
+  });
+
+  drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave', ()  => drop.classList.remove('drag-over'));
+  drop.addEventListener('drop', e => {
+    e.preventDefault(); drop.classList.remove('drag-over');
+    if (e.dataTransfer.files[0]) {
+      input.files = e.dataTransfer.files;
+      chosen.textContent = '📎 ' + e.dataTransfer.files[0].name;
+      btn.disabled = false;
+    }
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    overlay.classList.add('visible');
+
+    const poll = setInterval(async () => {
+      try {
+        const r = await fetch('/progress');
+        const d = await r.json();
+        if (d.total > 0) {
+          const pct = Math.round(d.done / d.total * 100);
+          fill.style.width = pct + '%';
+          count.textContent = pct + '%';
+          title.textContent = d.phase || 'Analyzing data...';
+          subtext.textContent = '';
+        }
+      } catch {}
+    }, 600);
+
+    fetch('/analyze', { method: 'POST', body: new FormData(form) })
+      .then(r => r.text())
+      .then(html => { clearInterval(poll); document.open(); document.write(html); document.close(); })
+      .catch(() => { clearInterval(poll); overlay.classList.remove('visible'); alert('Analysis error — please try again'); });
+  });
+</script>
+</body>
+</html>
