@@ -33,7 +33,27 @@ body.page-index {
 }
 .page-index .logo { width: 60px; height: 60px; margin: 0 auto 20px; }
 .page-index .logo svg { width: 34px; height: 34px; }
-.page-index .subtitle { margin-bottom: 36px; }
+.page-index .subtitle { margin-bottom: 28px; }
+
+.home-steps { display: flex; flex-direction: column; gap: 28px; text-align: left; }
+.home-step {
+  display: flex; gap: 16px; align-items: flex-start;
+  background: #fafafa; border-radius: 14px; padding: 20px 22px;
+  border: 1px solid #efefef;
+}
+.home-step-num {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%;
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  color: #fff; font-size: 16px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.home-step-body { flex: 1; min-width: 0; }
+.home-step-title { font-size: 15px; font-weight: 700; margin-bottom: 6px; color: #1a1a1a; }
+.home-step-desc { font-size: 13px; color: #8e8e8e; margin-bottom: 0; }
+.home-step-desc a { color: #c13584; font-weight: 600; }
+.home-step-2 .home-step-body { text-align: center; }
+.home-step-2 .drop-zone { margin-bottom: 20px; }
+.home-step-2 .file-chosen { margin-top: 10px; }
 
 .drop-zone {
   border: 2px dashed #dbdbdb; border-radius: 14px; padding: 40px 24px;

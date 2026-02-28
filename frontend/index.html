@@ -27,28 +27,34 @@
     </svg>
   </div>
   <h1>Instagram Analyzer</h1>
-  <p class="subtitle">Upload the ZIP file you downloaded from Instagram<br>and get a report of who's not following you back</p>
+  <p class="subtitle">Get a report of who's not following you back</p>
 
-  <form id="upload-form" action="/analyze" method="post" enctype="multipart/form-data">
-    <div class="drop-zone" id="drop-zone">
-      <input type="file" name="zipfile" id="file-input" accept=".zip">
-      <div class="drop-icon">📦</div>
-      <div class="drop-text">Drag a ZIP file here</div>
-      <div class="drop-hint">or click to browse</div>
+  <div class="home-steps">
+    <div class="home-step home-step-1">
+      <span class="home-step-num">1</span>
+      <div class="home-step-body">
+        <h2 class="home-step-title">Step 1: Get the ZIP file from Instagram</h2>
+        <p class="home-step-desc">Not sure how? <a href="/guide">Click here for the guide</a></p>
+      </div>
     </div>
-    <div class="file-chosen" id="file-chosen"></div>
-    <button type="submit" class="btn" id="submit-btn" disabled>Analyze →</button>
-  </form>
 
-  <div class="steps">
-    <div class="step"><span class="step-icon">📥</span>Download from Instagram</div>
-    <div class="step"><span class="step-icon">📤</span>Upload here</div>
-    <div class="step"><span class="step-icon">📊</span>Get report</div>
+    <div class="home-step home-step-2">
+      <span class="home-step-num">2</span>
+      <div class="home-step-body">
+        <h2 class="home-step-title">Step 2: Upload the ZIP file</h2>
+        <form id="upload-form" action="/analyze" method="post" enctype="multipart/form-data">
+          <div class="drop-zone" id="drop-zone">
+            <input type="file" name="zipfile" id="file-input" accept=".zip">
+            <div class="drop-icon">📦</div>
+            <div class="drop-text">Drag a ZIP file here</div>
+            <div class="drop-hint">or click to browse</div>
+          </div>
+          <div class="file-chosen" id="file-chosen"></div>
+          <button type="submit" class="btn" id="submit-btn" disabled>Analyze →</button>
+        </form>
+      </div>
+    </div>
   </div>
-
-  <p class="guide-link">Not sure how to download your data from Instagram?
-    <a href="/guide">Click here for the guide</a>
-  </p>
 </div>
 
 <script>
