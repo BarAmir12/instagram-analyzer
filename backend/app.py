@@ -107,6 +107,12 @@ def progress():
         return jsonify(_progress)
 
 
+@app.route("/healthz")
+def healthz():
+    """Health check for Render / load balancers."""
+    return "", 200
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     zip_file = request.files.get("zipfile")
