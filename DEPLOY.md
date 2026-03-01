@@ -21,6 +21,8 @@
 
 **Note:** On the free tier the service sleeps after ~15 minutes of no traffic; the first request after that may take **1–2 minutes** to wake up (keep the tab open and wait).
 
+**Verification on Render:** When running on Render (`RENDER=true`), Instagram often returns a generic page for all profile requests (no `profilePage_`). The app uses "conservative" mode: it only removes accounts when the page explicitly says "unavailable"; otherwise the full list is shown. For full verification (remove deleted by missing profile), run the app locally.
+
 **If the site doesn’t open:** wait 1–2 minutes and refresh (cold start); check Render **Logs** for errors; in **Settings** set Health Check Path to `/healthz`.
 
 ---

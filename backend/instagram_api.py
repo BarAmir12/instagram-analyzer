@@ -9,6 +9,7 @@ Public API:
 """
 
 import json
+import os
 import time
 import random
 import threading
@@ -17,6 +18,9 @@ import urllib.error
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import cookies as _cookies
+
+# On Render, Instagram often returns generic page (no profilePage_) for all requests; only remove when page says "unavailable"
+_verification_conservative = os.environ.get("RENDER") == "true"
 
 
 # ── Rate-limit state (reset per verify_accounts call) ────────────
@@ -210,7 +214,7 @@ def _fetch_user(username: str):
 # ── Per-account check functions (used as thread workers) ──────────
 
 def _check_existence(args):
-    """Account exists if profilePage_ in page. Without session: no profilePage_ → treat as unavailable (REMOVE)."""
+    """Account exists if profilePage_ in page. Without session: no profilePage_ → REMOVE (except on Render: only remove when unavail)."""
     username, ts = args
     time.sleep(random.uniform(0.2, 0.4))
     unavail, confirms = _fetch_profile_page(username)
@@ -218,7 +222,10 @@ def _check_existence(args):
         return (username, ts, False, False)
     if confirms:
         return (username, ts, True, False)
-    # No profilePage_: with session = likely deleted; without session = short UA gives generic page for deleted → REMOVE
+    has_session = getattr(_cookies, "has_logged_in_session", False)
+    # On Render (and similar), Instagram returns generic page for everyone without session → don't remove unless unavail
+    if not has_session and _verification_conservative:
+        return (username, ts, True, False)
     return (username, ts, False, False)
 
 
@@ -229,6 +236,8 @@ def _check_pending(args):
     if unavail:
         return (username, ts, False, None)
     if not getattr(_cookies, "has_logged_in_session", False):
+        if _verification_conservative:
+            return (username, ts, True, True)
         if not confirms:
             return (username, ts, False, None)
         return (username, ts, True, True)
