@@ -11,10 +11,9 @@
    - **Root Directory**: leave empty
    - **Runtime**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command** (use one of these):
-  - **Option A (recommended):** `bash start.sh` — uses the repo script so `$PORT` is set correctly (fixes "No open HTTP ports detected").
-  - **Option B:** `cd backend && gunicorn -w 1 --bind 0.0.0.0:$PORT --timeout 300 app:app`
-  - `--timeout 300` — allow /analyze to run up to 5 minutes.
+   - **Start Command:** `bash start.sh` (or `cd backend && gunicorn app:app -c gunicorn_config.py`).
+  - Uses `backend/gunicorn_config.py` so the port is read from the `PORT` env var **inside Python**, which fixes "No open HTTP ports detected" on Render.
+  - Timeout 5 min, 1 worker.
 5. **Advanced** (optional):
    - Env var `PYTHON_VERSION=3.12` if you want a specific version.
    - **Health Check Path**: set to `/healthz` so Render knows the app is up (Settings → Health Check Path).
