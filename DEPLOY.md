@@ -11,12 +11,18 @@
    - **Root Directory**: leave empty
    - **Runtime**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `cd backend && gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 300 app:app`
-  - `--timeout 300` — allow /analyze to run up to 5 minutes (verification can be slow).
-5. **Advanced** (optional): add env var `PYTHON_VERSION=3.12` if you want a specific version.
+   - **Start Command** (use one of these):
+  - **Option A (recommended):** `bash start.sh` — uses the repo script so `$PORT` is set correctly (fixes "No open HTTP ports detected").
+  - **Option B:** `cd backend && gunicorn -w 1 --bind 0.0.0.0:$PORT --timeout 300 app:app`
+  - `--timeout 300` — allow /analyze to run up to 5 minutes.
+5. **Advanced** (optional):
+   - Env var `PYTHON_VERSION=3.12` if you want a specific version.
+   - **Health Check Path**: set to `/healthz` so Render knows the app is up (Settings → Health Check Path).
 6. Click **Create Web Service**. Render sets `PORT` automatically and gives you a URL like `https://your-service.onrender.com`.
 
-**Note:** On the free tier the service sleeps after ~15 minutes of no traffic; the first request after that may take ~1 minute to wake up.
+**Note:** On the free tier the service sleeps after ~15 minutes of no traffic; the first request after that may take **1–2 minutes** to wake up (keep the tab open and wait).
+
+**If the site doesn’t open:** wait 1–2 minutes and refresh (cold start); check Render **Logs** for errors; in **Settings** set Health Check Path to `/healthz`.
 
 ---
 
