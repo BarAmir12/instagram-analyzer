@@ -21,8 +21,6 @@
 
 **Note:** On the free tier the service sleeps after ~15 minutes of no traffic; the first request after that may take **1–2 minutes** to wake up (keep the tab open and wait).
 
-**Verification on Render:** When running on Render (`RENDER=true`), Instagram often returns a generic page for all profile requests (no `profilePage_`). The app uses "conservative" mode: it only removes accounts when the page explicitly says "unavailable"; otherwise the full list is shown. For full verification (remove deleted by missing profile), run the app locally.
-
 **If the site doesn’t open:** wait 1–2 minutes and refresh (cold start); check Render **Logs** for errors; in **Settings** set Health Check Path to `/healthz`.
 
 ---
@@ -47,6 +45,5 @@ PORT=8000 gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 300 app:app
 ## Notes
 
 - **Upload limit**: 80 MB (configurable via `MAX_CONTENT_LENGTH` in `app.py`).
-- **Cookies**: On Linux, Chrome/Keychain login is skipped; the app uses cache or basic cookies.
-- **Verification**: Runs only with a logged-in session (cache or Chrome). On the server, verification is skipped and the full list is shown with a notice; run locally for full verification.
+- **No profile checks**: Lists are shown as in your Instagram export; no API or session needed.
 - **“Open in tabs”**: Works in the user’s browser (client-side); no server-side open needed.

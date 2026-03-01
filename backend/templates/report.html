@@ -9,15 +9,12 @@
 <body class="page-report">
     <h1>📊 Instagram Analytics — @{{ username }}</h1>
     <p class="subtitle">Generated on {{ generated_at }} from your Instagram data export</p>
-    {% if verification_limited %}
     <div class="verification-skipped-banner">
-        ⚠️ No Instagram session on this server — only profiles that clearly appear unavailable were removed. For full accuracy (removing all inactive/deleted), run the app <strong>locally</strong> on your computer.
+        Because we cannot access sessions, we are unable to verify users in the list; displayed data may therefore differ from current accuracy.
     </div>
-    {% endif %}
-
     <div class="stats">
-        <div class="stat-card"><div class="num">{{ data.followers_count|fmt_num }}</div><div class="lbl">Followers<span class="info-icon">!<span class="tooltip">These numbers may be slightly inaccurate — we only verify accounts that are not following you back and pending requests, to avoid overloading Instagram's servers. What matters most is that the "not following back" and "pending" counts are correct.</span></span></div></div>
-        <div class="stat-card"><div class="num">{{ data.following_count|fmt_num }}</div><div class="lbl">Following<span class="info-icon">!<span class="tooltip">These numbers may be slightly inaccurate — we only verify accounts that are not following you back and pending requests, to avoid overloading Instagram's servers. What matters most is that the "not following back" and "pending" counts are correct.</span></span></div></div>
+        <div class="stat-card"><div class="num">{{ data.followers_count|fmt_num }}</div><div class="lbl">Followers<span class="info-icon">!<span class="tooltip">From your Instagram data export. Lists below are as in the export — no profile checks.</span></span></div></div>
+        <div class="stat-card"><div class="num">{{ data.following_count|fmt_num }}</div><div class="lbl">Following<span class="info-icon">!<span class="tooltip">From your Instagram data export.</span></span></div></div>
         <div class="stat-card"><div class="num">{{ data.not_following_back|length|fmt_num }}</div><div class="lbl">Not following back</div></div>
         <div class="stat-card"><div class="num">{{ data.pending|length|fmt_num }}</div><div class="lbl">Pending requests</div></div>
     </div>

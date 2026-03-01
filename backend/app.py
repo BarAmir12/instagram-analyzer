@@ -27,13 +27,10 @@ from datetime import datetime
 
 from flask import Flask, Response, jsonify, render_template, request, send_from_directory
 
-# Allow sibling modules (cookies, instagram_api, analyzer) to be imported
 _BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
 _FRONTEND_DIR = os.path.join(_BACKEND_DIR, "..", "frontend")
 sys.path.insert(0, _BACKEND_DIR)
 
-import cookies
-import instagram_api
 import analyzer
 
 app = Flask(
@@ -140,23 +137,9 @@ def analyze():
         if m:
             username = m.group(1)
 
-        print("🌐 Initializing Instagram connection...")
-        cookies.init_ig_cookies()
-
-        verification_limited = not cookies.has_logged_in_session
-        if verification_limited:
-            print("   ⚠️  No Instagram session — only profiles that clearly appear unavailable will be removed.")
-        pending_n = len(data["pending"])
-        nfb_n     = len(data["not_following_back"])
+        # No profile verification — show lists as in the export (faster, no Instagram API load)
         with _log_lock:
-            _progress.update({"done": 0, "total": pending_n + nfb_n, "phase": "Starting verification..."})
-
-        data["pending"],            rl_pending = instagram_api.verify_accounts(
-            data["pending"], "pending", require_private=True, progress_callback=_on_progress
-        )
-        data["not_following_back"], rl_nfb = instagram_api.verify_accounts(
-            data["not_following_back"], "not following back", require_private=False, progress_callback=_on_progress
-        )
+            _progress.update({"done": 1, "total": 1, "phase": "Building report..."})
 
         generated_at = datetime.now().strftime("%d/%m/%Y %H:%M")
         return render_template(
@@ -164,9 +147,9 @@ def analyze():
             data=data,
             username=username,
             generated_at=generated_at,
-            rl_nfb=rl_nfb,
-            rl_pending=rl_pending,
-            verification_limited=verification_limited,
+            rl_nfb=False,
+            rl_pending=False,
+            verification_limited=False,
             port=app.config["PORT"],
         )
 
