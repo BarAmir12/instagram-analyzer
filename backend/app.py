@@ -43,6 +43,8 @@ app = Flask(
 # Production: port from env (e.g. Gunicorn); limit upload size
 app.config["PORT"] = int(os.environ.get("PORT", 5000))
 app.config["MAX_CONTENT_LENGTH"] = 80 * 1024 * 1024  # 80 MB
+# Cache-bust static assets after deploy (Render sets RENDER_GIT_COMMIT)
+app.config["STATIC_VERSION"] = (os.environ.get("RENDER_GIT_COMMIT") or "0")[:8]
 
 
 # ── Template filters (for report.html) ─────────────────────────────
@@ -90,7 +92,10 @@ class _LogCapture(io.TextIOBase):
 
 @app.route("/")
 def index():
-    return send_from_directory(_FRONTEND_DIR, "index.html")
+    return render_template(
+        "index.html",
+        static_version=app.config["STATIC_VERSION"],
+    )
 
 
 @app.route("/guide")
@@ -151,6 +156,7 @@ def analyze():
             rl_pending=False,
             verification_limited=False,
             port=app.config["PORT"],
+            static_version=app.config["STATIC_VERSION"],
         )
 
     except Exception as e:
