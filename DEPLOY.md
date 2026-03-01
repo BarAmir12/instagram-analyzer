@@ -11,7 +11,8 @@
    - **Root Directory**: leave empty
    - **Runtime**: Python 3
    - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `cd backend && gunicorn -w 1 -b 0.0.0.0:$PORT app:app`
+   - **Start Command**: `cd backend && gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 300 app:app`
+  - `--timeout 300` — allow /analyze to run up to 5 minutes (verification can be slow).
 5. **Advanced** (optional): add env var `PYTHON_VERSION=3.12` if you want a specific version.
 6. Click **Create Web Service**. Render sets `PORT` automatically and gives you a URL like `https://your-service.onrender.com`.
 
@@ -26,10 +27,11 @@ From the project root:
 ```bash
 pip install -r requirements.txt
 cd backend
-PORT=8000 gunicorn -w 1 -b 0.0.0.0:$PORT app:app
+PORT=8000 gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 300 app:app
 ```
 
 - `-w 1` — one worker (progress updates work correctly).
+- `--timeout 300` — request timeout 5 minutes (so /analyze verification does not get cut).
 - `-b 0.0.0.0:$PORT` — listen on all interfaces; set `PORT` in the environment (e.g. 8000 or your host’s port).
 - Run behind a reverse proxy (nginx, Caddy) for HTTPS.
 
