@@ -19,15 +19,99 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import cookies as _cookies
 
 
-# ── Rate-limit flag (reset per verify_accounts call) ─────────────
+# ── Rate-limit state (reset per verify_accounts call) ────────────
 
 _rate_limited = threading.Event()
+_rate_limited_until = 0.0  # time.time() after which we may retry API
+_RATE_LIMIT_COOLDOWN = 70   # seconds to wait before retrying API after 429
 
 
 # ── Low-level API helpers ─────────────────────────────────────────
 
+def _profile_returns_404(username: str) -> bool:
+    """HEAD request to profile URL. Returns True if 404 (account does not exist)."""
+    url = f"https://www.instagram.com/{username}/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+        "Accept": "text/html",
+    }
+    if _cookies.ig_cookies:
+        headers["Cookie"] = _cookies.ig_cookies
+    try:
+        req = urllib.request.Request(url, headers=headers, method="HEAD")
+        with urllib.request.urlopen(req, timeout=8, context=_cookies.ssl_ctx) as resp:
+            return resp.status == 404
+    except urllib.error.HTTPError as e:
+        return e.code == 404
+    except Exception:
+        return False
+
+
+def _fetch_profile_page(username: str) -> tuple[bool, bool]:
+    """
+    Fetch profile page HTML. Returns (unavailable, confirms_exists).
+    unavailable: True if page says account is deleted/unavailable or 404.
+    confirms_exists: True if page contains profilePage_ (real profile).
+    No HEAD before GET — HEAD can cause Instagram to return a stub page on the GET.
+    """
+    url = f"https://www.instagram.com/{username}/"
+    # Same headers as direct GET that returns full page (profilePage_)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "Accept": "text/html",
+    }
+    if _cookies.ig_cookies:
+        headers["Cookie"] = _cookies.ig_cookies
+
+    def _do_fetch():
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=10, context=_cookies.ssl_ctx) as resp:
+                if resp.status != 200:
+                    return (True, False, "")
+                html = resp.read().decode("utf-8", errors="ignore")
+                unavail = (
+                    "Sorry, this page isn't available" in html
+                    or "this page isn't available" in html
+                    or "page isn't available" in html
+                    or "User not found" in html
+                    or "The link you followed may be broken" in html
+                    or "link you followed may be broken" in html
+                )
+                confirms = (
+                    "profilePage_" in html
+                    or "logging_page_id" in html
+                    or '"profile_id":' in html
+                )
+                return (unavail, confirms, html)
+        except urllib.error.HTTPError as e:
+            return (e.code == 404, False, "")
+        except Exception:
+            return (False, False, "")
+
+    unavail, confirms, html = _do_fetch()
+    for _ in range(2):
+        if unavail or confirms:
+            break
+        time.sleep(random.uniform(1.0, 1.8))
+        unavail, confirms, html = _do_fetch()
+    return (unavail, confirms)
+
+
+def _profile_page_unavailable(username: str) -> bool:
+    """Fetch profile page; return True if page says account is unavailable (deleted/deactivated)."""
+    unavail, _ = _fetch_profile_page(username)
+    return unavail
+
+
+def _profile_page_confirms_exists(username: str) -> bool:
+    """Fetch profile page; return True only if page clearly shows a real profile (profilePage_ etc.)."""
+    _, confirms = _fetch_profile_page(username)
+    return confirms
+
+
 def _search_check(username: str):
-    """Fallback search when the profile API is rate-limited."""
+    """Fallback search when the profile API is rate-limited. Returns user dict, False (not found), or None (error)."""
     url = f"https://www.instagram.com/web/search/topsearch/?query={username}&context=blended"
     headers = {
         "User-Agent":  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -47,16 +131,37 @@ def _search_check(username: str):
                 (u.get("user", {}) for u in users if u.get("user", {}).get("username") == username),
                 None,
             )
-            return match if match is not None else False
+            if match is None or not _is_valid_user(match, required_username=username):
+                return False
+            return match
     except Exception:
         return None
 
 
+def _is_valid_user(user, required_username: str = None) -> bool:
+    """True only if we got a real profile: has both pk and username, and optional username match."""
+    if not user or not isinstance(user, dict):
+        return False
+    un = user.get("username")
+    pk = user.get("pk")
+    if not un or not pk:
+        return False
+    if isinstance(un, str):
+        un = un.strip()
+    if not un:
+        return False
+    if required_username is not None and un.lower() != required_username.lower():
+        return False
+    return True
+
+
 def _fetch_user(username: str):
-    """Fetch full profile info for a username. Returns user dict, None (deleted), {} (error), or 'RATE_LIMITED'."""
+    """Fetch full profile info for a username. Returns user dict, None (deleted/invalid), {} (error), or 'RATE_LIMITED'."""
     if _rate_limited.is_set():
-        return "RATE_LIMITED"
-    time.sleep(random.uniform(0.3, 0.8))
+        if time.time() < _rate_limited_until:
+            return "RATE_LIMITED"
+        _rate_limited.clear()
+    time.sleep(random.uniform(1.0, 2.0))
     url = f"https://www.instagram.com/api/v1/users/web_profile_info/?username={username}"
     headers = {
         "User-Agent":        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
@@ -74,13 +179,30 @@ def _fetch_user(username: str):
     try:
         req = urllib.request.Request(url, headers=headers)
         with urllib.request.urlopen(req, timeout=12, context=_cookies.ssl_ctx) as resp:
-            data = json.loads(resp.read())
-            return data.get("data", {}).get("user")
+            raw = resp.read()
+            data = json.loads(raw)
+            user = data.get("data") or {}
+            if not isinstance(user, dict):
+                return None
+            user = user.get("user")
+            if not _is_valid_user(user, required_username=username):
+                return None
+            return user
     except urllib.error.HTTPError as e:
         if e.code in (401, 429):
+            globals()["_rate_limited_until"] = time.time() + _RATE_LIMIT_COOLDOWN
             _rate_limited.set()
             return "RATE_LIMITED"
-        return None if e.code in (404, 400) else {}
+        if e.code in (404, 400):
+            return None
+        try:
+            body = e.read()
+            data = json.loads(body)
+            if data.get("message") or data.get("user") is None:
+                return None
+        except Exception:
+            pass
+        return {}
     except Exception:
         return {}
 
@@ -88,25 +210,30 @@ def _fetch_user(username: str):
 # ── Per-account check functions (used as thread workers) ──────────
 
 def _check_existence(args):
+    """Account exists only if profile page contains profilePage_ (no API/search fallback)."""
     username, ts = args
-    user = _fetch_user(username)
-    if user == "RATE_LIMITED":
-        result = _search_check(username)
-        return (username, ts, result is not False, False)
-    if user is None:
+    time.sleep(random.uniform(0.2, 0.4))
+    unavail, confirms = _fetch_profile_page(username)
+    if unavail:
         return (username, ts, False, False)
-    return (username, ts, True, False)
+    if confirms:
+        return (username, ts, True, False)
+    return (username, ts, False, False)
 
 
 def _check_pending(args):
     username, ts = args
+    time.sleep(random.uniform(0.2, 0.4))
+    unavail, confirms = _fetch_profile_page(username)
+    if unavail:
+        return (username, ts, False, None)
     user = _fetch_user(username)
     if user == "RATE_LIMITED":
         result = _search_check(username)
-        if result is None:
-            return (username, ts, True, True)
         if result is False:
             return (username, ts, False, None)
+        if result is None:
+            return (username, ts, True, True)
         is_priv = result.get("is_private", True) if isinstance(result, dict) else True
         return (username, ts, True, is_priv)
     if user is None:

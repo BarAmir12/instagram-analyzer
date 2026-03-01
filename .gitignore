@@ -21,6 +21,11 @@ build/
 *.swo
 .DS_Store
 
+# Debug (local only, do not deploy)
+debug_check_users.py
+debug_two_users.py
+debug_output.txt
+
 # Logs & cache
 *.log
 .cache/
