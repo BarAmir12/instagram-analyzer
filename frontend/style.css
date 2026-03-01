@@ -180,34 +180,40 @@ body.page-index {
 }
 .verification-skipped-banner strong { font-weight: 700; }
 
-.stats { display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; }
+.stats { display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; overflow: visible; }
 .stat-card {
   background: #fff; border: 1px solid #dbdbdb; border-radius: 12px;
   padding: 16px 22px; min-width: 140px; text-align: center;
 }
 .stat-card .num { font-size: 28px; font-weight: 700; color: #0095f6; }
 .stat-card .lbl { font-size: 12px; color: #8e8e8e; margin-top: 4px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.stat-card { overflow: visible; }
 
 .info-icon {
   display: inline-flex; align-items: center; justify-content: center;
   width: 14px; height: 14px; border-radius: 50%;
-  background: #d0d0d0; color: #fff; font-size: 9px; font-weight: 700;
-  cursor: default; line-height: 1; flex-shrink: 0; position: relative;
+  background: #8e8e8e; color: #fff; font-size: 9px; font-weight: 700;
+  cursor: help; line-height: 1; flex-shrink: 0; position: relative;
 }
 .info-icon .tooltip {
-  display: none; position: absolute;
-  bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
-  background: #262626; color: #fff;
-  font-size: 12px; font-weight: 400; line-height: 1.5;
-  padding: 10px 14px; border-radius: 10px;
-  width: 260px; text-align: left;
-  z-index: 99; pointer-events: none;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  display: none; position: fixed;
+  background: #1a1a1a; color: #fff;
+  font-size: 13px; font-weight: 400; line-height: 1.5;
+  padding: 12px 16px; border-radius: 10px;
+  width: 280px; max-width: min(280px, calc(100vw - 24px)); text-align: left;
+  z-index: 9999; pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+  white-space: normal; line-height: 1.55;
+  /* left/top set by JS to keep inside viewport */
 }
 .info-icon .tooltip::after {
   content: ''; position: absolute;
   top: 100%; left: 50%; transform: translateX(-50%);
-  border: 6px solid transparent; border-top-color: #262626;
+  border: 6px solid transparent; border-top-color: #1a1a1a;
+}
+.info-icon .tooltip.tooltip-below::after {
+  top: auto; bottom: 100%;
+  border-top-color: transparent; border-bottom-color: #1a1a1a;
 }
 .info-icon:hover .tooltip { display: block; }
 

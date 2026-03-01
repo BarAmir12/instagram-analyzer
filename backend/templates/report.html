@@ -184,6 +184,31 @@
             });
             updateCount(tableId);
         }
+
+        function positionTooltipInViewport(icon, tooltip) {
+            tooltip.style.display = 'block';
+            const iconR = icon.getBoundingClientRect();
+            const ttR = tooltip.getBoundingClientRect();
+            const vw = document.documentElement.clientWidth;
+            const vh = document.documentElement.clientHeight;
+            const pad = 12;
+            let left = iconR.left + iconR.width / 2 - ttR.width / 2;
+            left = Math.max(pad, Math.min(left, vw - ttR.width - pad));
+            let top = iconR.top - ttR.height - 10;
+            const below = top < pad;
+            if (below) top = iconR.bottom + 10;
+            top = Math.max(pad, Math.min(top, vh - ttR.height - pad));
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = top + 'px';
+            tooltip.classList.toggle('tooltip-below', below);
+        }
+
+        document.querySelectorAll('.info-icon').forEach(icon => {
+            const tooltip = icon.querySelector('.tooltip');
+            if (!tooltip) return;
+            icon.addEventListener('mouseenter', () => positionTooltipInViewport(icon, tooltip));
+            icon.addEventListener('mouseleave', () => { tooltip.style.display = 'none'; });
+        });
         {% endraw %}
     </script>
 </body>
