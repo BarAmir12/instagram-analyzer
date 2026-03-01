@@ -46,4 +46,5 @@ PORT=8000 gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 300 app:app
 
 - **Upload limit**: 80 MB (configurable via `MAX_CONTENT_LENGTH` in `app.py`).
 - **Cookies**: On Linux, Chrome/Keychain login is skipped; the app uses cache or basic cookies.
+- **Verification**: Runs only with a logged-in session (cache or Chrome). On the server, verification is skipped and the full list is shown with a notice; run locally for full verification.
 - **“Open in tabs”**: Works in the user’s browser (client-side); no server-side open needed.

@@ -174,6 +174,12 @@ body.page-index {
 .page-report h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
 .page-report .subtitle { color: #8e8e8e; font-size: 13px; margin-bottom: 32px; }
 
+.verification-skipped-banner {
+  background: #fff3cd; border: 1px solid #ffc107; border-radius: 10px;
+  padding: 14px 18px; margin-bottom: 24px; font-size: 14px; color: #856404;
+}
+.verification-skipped-banner strong { font-weight: 700; }
+
 .stats { display: flex; gap: 14px; margin-bottom: 32px; flex-wrap: wrap; }
 .stat-card {
   background: #fff; border: 1px solid #dbdbdb; border-radius: 12px;

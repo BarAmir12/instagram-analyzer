@@ -210,7 +210,7 @@ def _fetch_user(username: str):
 # ── Per-account check functions (used as thread workers) ──────────
 
 def _check_existence(args):
-    """Account exists only if profile page contains profilePage_ (no API/search fallback)."""
+    """Account exists if profilePage_ in page. Without session: no profilePage_ → treat as unavailable (REMOVE)."""
     username, ts = args
     time.sleep(random.uniform(0.2, 0.4))
     unavail, confirms = _fetch_profile_page(username)
@@ -218,6 +218,7 @@ def _check_existence(args):
         return (username, ts, False, False)
     if confirms:
         return (username, ts, True, False)
+    # No profilePage_: with session = likely deleted; without session = short UA gives generic page for deleted → REMOVE
     return (username, ts, False, False)
 
 
@@ -227,6 +228,10 @@ def _check_pending(args):
     unavail, confirms = _fetch_profile_page(username)
     if unavail:
         return (username, ts, False, None)
+    if not getattr(_cookies, "has_logged_in_session", False):
+        if not confirms:
+            return (username, ts, False, None)
+        return (username, ts, True, True)
     user = _fetch_user(username)
     if user == "RATE_LIMITED":
         result = _search_check(username)
@@ -274,6 +279,7 @@ def verify_accounts(
 
     if not require_private:
         phase = "Checking who's not following back..."
+        report(phase, 0, total)
         print(f"\n🔍 Checking existence of {total} accounts ({label}) — {workers} threads in parallel...")
         results    = {}
         rate_warned = False
@@ -299,6 +305,7 @@ def verify_accounts(
                 removed_missing += 1
     else:
         phase = "Checking pending requests..."
+        report(phase, 0, total)
         print(f"\n🔍 Checking {total} pending accounts...")
         results = {}
         with ThreadPoolExecutor(max_workers=workers) as executor:

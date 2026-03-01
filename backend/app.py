@@ -143,6 +143,14 @@ def analyze():
         print("🌐 Initializing Instagram connection...")
         cookies.init_ig_cookies()
 
+        verification_limited = not cookies.has_logged_in_session
+        if verification_limited:
+            print("   ⚠️  No Instagram session — only profiles that clearly appear unavailable will be removed.")
+        pending_n = len(data["pending"])
+        nfb_n     = len(data["not_following_back"])
+        with _log_lock:
+            _progress.update({"done": 0, "total": pending_n + nfb_n, "phase": "Starting verification..."})
+
         data["pending"],            rl_pending = instagram_api.verify_accounts(
             data["pending"], "pending", require_private=True, progress_callback=_on_progress
         )
@@ -158,6 +166,7 @@ def analyze():
             generated_at=generated_at,
             rl_nfb=rl_nfb,
             rl_pending=rl_pending,
+            verification_limited=verification_limited,
             port=app.config["PORT"],
         )
 

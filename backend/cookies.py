@@ -34,6 +34,8 @@ ssl_ctx.verify_mode = ssl.CERT_NONE
 
 ig_cookies: str = ""
 ig_csrf:    str = ""
+# True only when session came from cache or Chrome (not from _fetch_basic_cookies)
+has_logged_in_session: bool = False
 
 _COOKIE_CACHE = os.path.expanduser("~/.ig_session_cache.json")
 
@@ -50,7 +52,7 @@ def _save_cookie_cache(cookie_dict: dict) -> None:
 
 
 def _load_cookie_cache() -> bool:
-    global ig_cookies, ig_csrf
+    global ig_cookies, ig_csrf, has_logged_in_session
     if not os.path.exists(_COOKIE_CACHE):
         return False
     try:
@@ -62,6 +64,7 @@ def _load_cookie_cache() -> bool:
         ig_csrf    = cookie_dict.get("csrftoken", "")
         uid        = cookie_dict.get("ds_user_id", "?")
         print(f"   🍪 Loaded cookies from local cache (user_id={uid})")
+        has_logged_in_session = True
         return True
     except Exception:
         return False
@@ -70,7 +73,7 @@ def _load_cookie_cache() -> bool:
 # ── Chrome cookie loader ──────────────────────────────────────────
 
 def _load_chrome_cookies() -> bool:
-    global ig_cookies, ig_csrf
+    global ig_cookies, ig_csrf, has_logged_in_session
     if sys.platform != "darwin":
         return False  # Chrome/Keychain loading is macOS-only; on Linux use cache or basic cookies
     try:
@@ -128,6 +131,7 @@ def _load_chrome_cookies() -> bool:
         uid        = cookie_dict.get("ds_user_id", "?")
         print(f"   🍪 Loaded {len(cookie_dict)} cookies from Chrome (user_id={uid})")
         _save_cookie_cache(cookie_dict)
+        has_logged_in_session = True
         return True
     except Exception as e:
         print(f"   ⚠️  Error reading Chrome cookies: {e}")
@@ -169,6 +173,8 @@ def _fetch_basic_cookies() -> None:
 # ── Public entry point ────────────────────────────────────────────
 
 def init_ig_cookies() -> None:
+    global has_logged_in_session
+    has_logged_in_session = False
     if _load_cookie_cache():
         return
     if _load_chrome_cookies():
