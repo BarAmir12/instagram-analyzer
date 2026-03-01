@@ -32,6 +32,7 @@ _FRONTEND_DIR = os.path.join(_BACKEND_DIR, "..", "frontend")
 sys.path.insert(0, _BACKEND_DIR)
 
 import analyzer
+from validation import validate_zip
 
 app = Flask(
     __name__,
@@ -42,7 +43,7 @@ app = Flask(
 
 # Production: port from env (e.g. Gunicorn); limit upload size
 app.config["PORT"] = int(os.environ.get("PORT", 5000))
-app.config["MAX_CONTENT_LENGTH"] = 80 * 1024 * 1024  # 80 MB
+app.config["MAX_CONTENT_LENGTH"] = 5 * 1024 * 1024  # 5 MB
 # Cache-bust static assets after deploy (Render sets RENDER_GIT_COMMIT)
 app.config["STATIC_VERSION"] = (os.environ.get("RENDER_GIT_COMMIT") or "0")[:8]
 
@@ -131,9 +132,16 @@ def analyze():
     try:
         zip_file.save(zip_path)
 
+        ok, validation_errors = validate_zip(zip_path, app.config["MAX_CONTENT_LENGTH"])
+        if not ok:
+            return jsonify({"error": True, "reasons": validation_errors or ["Invalid file."]}), 400
+
         print("📦 ZIP file received — starting analysis...")
-        paths = analyzer.extract_files(zip_path, tmpdir)
-        data  = analyzer.parse_data(paths)
+        try:
+            paths = analyzer.extract_files(zip_path, tmpdir)
+            data  = analyzer.parse_data(paths)
+        except ValueError as e:
+            return jsonify({"error": True, "reasons": [str(e)]}), 400
         print(f"📊 Followers: {data['followers_count']} | Following: {data['following_count']}")
 
         username      = "user"
@@ -163,11 +171,7 @@ def analyze():
         import traceback
         print(f"❌ Error: {e}")
         traceback.print_exc()
-        return Response(
-            "Something went wrong. Please try again or use a valid Instagram data export.",
-            status=500,
-            mimetype="text/plain; charset=utf-8",
-        )
+        return jsonify({"error": True, "reasons": ["Something went wrong. Please try again or use a valid Instagram data export."]}), 500
     finally:
         shutil.rmtree(tmpdir, ignore_errors=True)
 

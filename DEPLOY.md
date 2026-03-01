@@ -44,6 +44,6 @@ PORT=8000 gunicorn -w 1 -b 0.0.0.0:$PORT --timeout 300 app:app
 
 ## Notes
 
-- **Upload limit**: 80 MB (configurable via `MAX_CONTENT_LENGTH` in `app.py`).
+- **Upload limit**: 5 MB (configurable via `MAX_CONTENT_LENGTH` in `app.py`).
 - **No profile checks**: Lists are shown as in your Instagram export; no API or session needed.
 - **“Open in tabs”**: Works in the user’s browser (client-side); no server-side open needed.

@@ -50,6 +50,7 @@
             <div class="drop-hint">or click to browse</div>
           </div>
           <div class="file-chosen" id="file-chosen"></div>
+          <div class="file-error" id="file-error" role="alert" aria-live="polite"></div>
           <button type="submit" class="btn" id="submit-btn" disabled>Analyze →</button>
         </form>
       </div>
@@ -58,20 +59,69 @@
 </div>
 
 <script>
-  const input   = document.getElementById('file-input');
-  const chosen  = document.getElementById('file-chosen');
-  const btn     = document.getElementById('submit-btn');
-  const drop    = document.getElementById('drop-zone');
-  const form    = document.getElementById('upload-form');
-  const overlay = document.getElementById('overlay');
-  const fill    = document.getElementById('progress-fill');
-  const count   = document.getElementById('progress-count');
-  const title   = document.getElementById('progress-title');
-  const subtext = document.getElementById('progress-sub');
+  const input     = document.getElementById('file-input');
+  const chosen    = document.getElementById('file-chosen');
+  const fileError = document.getElementById('file-error');
+  const btn       = document.getElementById('submit-btn');
+  const drop      = document.getElementById('drop-zone');
+  const form      = document.getElementById('upload-form');
+  const overlay   = document.getElementById('overlay');
+  const fill      = document.getElementById('progress-fill');
+  const count     = document.getElementById('progress-count');
+  const title     = document.getElementById('progress-title');
+  const subtext   = document.getElementById('progress-sub');
 
-  input.addEventListener('change', () => {
-    if (input.files[0]) { chosen.textContent = '📎 ' + input.files[0].name; btn.disabled = false; }
-  });
+  const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+  function setError(msg, reasons) {
+    if (!msg && !(reasons && reasons.length)) {
+      fileError.innerHTML = '';
+      fileError.style.display = 'none';
+      fileError.classList.remove('file-error--list');
+      return;
+    }
+    fileError.style.display = 'block';
+    if (reasons && reasons.length) {
+      fileError.classList.add('file-error--list');
+      const tip = reasons.filter(r => r.startsWith('→'));
+      const points = reasons.filter(r => !r.startsWith('→'));
+      fileError.innerHTML =
+        '<span class="file-error-title">File doesn\'t match required format</span>' +
+        '<ul class="file-error-list">' + points.map(p => '<li>' + escapeHtml(p) + '</li>').join('') + '</ul>' +
+        (tip.length ? '<p class="file-error-tip">' + escapeHtml(tip[0]) + ' <a href="/guide">Full guide</a></p>' : '');
+    } else {
+      fileError.classList.remove('file-error--list');
+      fileError.textContent = msg || '';
+    }
+  }
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+
+  function validateFile(file) {
+    setError('');
+    if (!file) return false;
+    if (!file.name.toLowerCase().endsWith('.zip')) {
+      setError('Please choose a .zip file only.');
+      return false;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError('File is too large (max 5 MB). Request a smaller date range in Instagram.');
+      return false;
+    }
+    return true;
+  }
+
+  function setFileState(file) {
+    if (!file) { chosen.textContent = ''; setError(''); btn.disabled = true; return; }
+    chosen.textContent = '📎 ' + file.name;
+    if (validateFile(file)) { setError(''); btn.disabled = false; }
+    else btn.disabled = true;
+  }
+
+  input.addEventListener('change', () => setFileState(input.files[0]));
 
   drop.addEventListener('dragover',  e => { e.preventDefault(); drop.classList.add('drag-over'); });
   drop.addEventListener('dragleave', ()  => drop.classList.remove('drag-over'));
@@ -79,23 +129,28 @@
     e.preventDefault(); drop.classList.remove('drag-over');
     if (e.dataTransfer.files[0]) {
       input.files = e.dataTransfer.files;
-      chosen.textContent = '📎 ' + e.dataTransfer.files[0].name;
-      btn.disabled = false;
+      setFileState(input.files[0]);
     }
   });
 
   form.addEventListener('submit', e => {
     e.preventDefault();
+    const file = input.files[0];
+    if (!file) return;
+    if (!validateFile(file)) return;
+
+    setError('');
     overlay.classList.add('visible');
+    title.textContent = 'Analyzing data...';
+    subtext.textContent = '';
 
     const poll = setInterval(async () => {
       try {
         const r = await fetch('/progress');
         const d = await r.json();
         if (d.total > 0) {
-          const pct = Math.round(d.done / d.total * 100);
-          fill.style.width = pct + '%';
-          count.textContent = pct + '%';
+          fill.style.width = Math.round(d.done / d.total * 100) + '%';
+          count.textContent = Math.round(d.done / d.total * 100) + '%';
           title.textContent = d.phase || 'Analyzing data...';
           subtext.textContent = '';
         }
@@ -103,9 +158,32 @@
     }, 600);
 
     fetch('/analyze', { method: 'POST', body: new FormData(form) })
-      .then(r => r.text())
-      .then(html => { clearInterval(poll); document.open(); document.write(html); document.close(); })
-      .catch(() => { clearInterval(poll); overlay.classList.remove('visible'); alert('Analysis error — please try again'); });
+      .then(async r => {
+        clearInterval(poll);
+        if (r.ok) {
+          const html = await r.text();
+          document.open(); document.write(html); document.close();
+          return;
+        }
+        overlay.classList.remove('visible');
+        let msg = 'Upload or analysis failed.';
+        if (r.status === 413) msg = 'File is too large. Request a smaller date range in Instagram.';
+        else if (r.status === 400) {
+          try {
+            const d = await r.json();
+            if (d.reasons && d.reasons.length) {
+              setError(null, d.reasons);
+              return;
+            }
+          } catch {}
+        }
+        setError(msg);
+      })
+      .catch(() => {
+        clearInterval(poll);
+        overlay.classList.remove('visible');
+        setError('Network error. Please try again.');
+      });
   });
 </script>
 </body>

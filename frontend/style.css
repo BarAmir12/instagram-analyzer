@@ -68,6 +68,21 @@ body.page-index {
 .drop-text { font-size: 15px; font-weight: 600; color: #262626; margin-bottom: 4px; }
 .drop-hint { font-size: 12px; color: #8e8e8e; }
 .file-chosen { font-size: 13px; font-weight: 600; color: #c13584; margin-top: 10px; min-height: 18px; }
+.file-error {
+  font-size: 13px; color: #5c3a4a; margin-top: 10px; min-height: 18px; white-space: pre-line; display: none;
+  background: #fdf5f8; border: 1px solid #f0d8e2; border-radius: 10px; padding: 12px 14px; text-align: left;
+}
+.file-error.file-error--list { padding: 12px 14px 10px; }
+.file-error--list .file-error-title {
+  font-weight: 700; color: #9e2d5a; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; display: block;
+}
+.file-error--list .file-error-list {
+  margin: 0 0 10px 0; padding-left: 18px; color: #5c3a4a; line-height: 1.45;
+}
+.file-error--list .file-error-list li { margin-bottom: 2px; }
+.file-error--list .file-error-tip {
+  font-size: 12px; color: #8e6a7a; margin: 0; padding-top: 8px; border-top: 1px solid #f0d8e2;
+}
 
 .btn {
   width: 100%; padding: 14px;

@@ -21,6 +21,9 @@ build/
 *.swo
 .DS_Store
 
+# Local / private (do not commit)
+RENDER_WORKSPACE.md
+
 # Debug (local only, do not deploy)
 debug_check_users.py
 debug_two_users.py
